@@ -60,7 +60,8 @@ async function getPrepareResponse(selector: Selector,
         job: job,
         query: queryAndResult.query,
         count: dataset.xs.length,
-        model: JSON.stringify(modelJson)
+        model: JSON.stringify(modelJson),
+        weights: weights,
     }
     return redisResult;
 }
