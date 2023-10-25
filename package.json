@@ -14,11 +14,12 @@
       "*.bin"
     ]
   },
-  "author": "Louis Mullie",
+  "author": "Jeffrey Li, Louis Mullie",
   "license": "GPL v3",
   "dependencies": {
-    "@tensorflow/tfjs": "^3.13.0",
-    "@tensorflow/tfjs-node": "^3.13.0",
+    "@tensorflow/tfjs": "^4.12.0",
+    "@tensorflow/tfjs-core": "^4.12.0",
+    "@tensorflow/tfjs-node": "^4.12.0",
     "axios": "^0.21.1",
     "dotenv": "^8.6.0",
     "express": "^4.17.1",
