@@ -77,7 +77,11 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
 
     let history = await TrainingModel.fitDataset(
         trainDataset,
-        { epochs: epochs, validationData: validationDataset }
+        {
+            epochs: epochs, validationData: validationDataset,
+            // Disable progress bar which has some issues in TFJS
+            verbose: 0
+        }
     )
 
 
