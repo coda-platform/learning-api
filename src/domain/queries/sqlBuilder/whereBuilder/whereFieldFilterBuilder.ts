@@ -20,15 +20,23 @@ function getFilterNormalized(filter: Filter, filterFields: Map<Filter, FieldInfo
         : jsonFieldValuePathCompiler.getPathCompiled(filter.path);
 
     const filterValue = isIndexArrayField
-        ?  jsonQueryValueFormatter.formatIndexValueForSql(filter.value, filter.path)
+        ? jsonQueryValueFormatter.formatIndexValueForSql(filter.value, filter.path)
         : jsonQueryValueFormatter.formatValueForSql(filter, fieldInfo);
-    const sqlOperand = isIndexArrayField
-        ?  "@>"
-        :jsonFilterOperatorFormatter.formatOperatorForSql(filter);
-    const cast = fieldInfo.type
-    return isIndexArrayField 
-        ? `${jsonFieldValuePathCompiled} ${sqlOperand} ${filterValue}` 
-        :`(${jsonFieldValuePathCompiled})::${cast} ${sqlOperand} ${filterValue}`;
+
+    try {
+        const sqlOperand = isIndexArrayField
+            ? "@>"
+            : jsonFilterOperatorFormatter.formatOperatorForSql(filter);
+        const cast = fieldInfo.type
+        return isIndexArrayField
+            ? `${jsonFieldValuePathCompiled} ${sqlOperand} ${filterValue}`
+            : `(${jsonFieldValuePathCompiled})::${cast} ${sqlOperand} ${filterValue}`;
+    } catch (err) {
+        const error = err as Error
+        console.error(`Error while building filter ${filter.path}: ${error.message}`);
+        return "1=1"
+    }
+
 }
 
 function build(selector: Selector, filterFieldTypes: Map<Filter, FieldInfo>, possibleComputedField?: Field) {
