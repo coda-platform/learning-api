@@ -7,76 +7,75 @@ import redisDataProcessor from "../../../infrastructure/redis/redisDataProcessor
 const tf = require('@tensorflow/tfjs-node');
 
 async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<EvaluateResponse> {
+    const redisKeysStr = await Redis.getRedisKey(jobID);
+    const redisKeys = JSON.parse(redisKeysStr);
 
-    let redisKeys: any = await Redis.getRedisKey(jobID);
-    redisKeys = await JSON.parse(redisKeys);
-    const datasetRedisKey = redisKeys.datasetRedisKey;
-    const optionsRedisKey = redisKeys.optionsRedisKey;
-    const modelRedisKey = redisKeys.modelRedisKey;
-    const weightsRedisKey = redisKeys.weightsRedisKey;
+    const [datasetStr, optionsStr, modelStr, weights] = await Promise.all([
+        Redis.getRedisKey(redisKeys.datasetRedisKey),
+        Redis.getRedisKey(redisKeys.optionsRedisKey),
+        Redis.getRedisKey(redisKeys.modelRedisKey),
+        hubWeights ? Promise.resolve(hubWeights) : Redis.getBuffer(redisKeys.weightsRedisKey)
+    ]);
 
-    const datasetStr = await Redis.getRedisKey(datasetRedisKey);
-    const optionsStr = await Redis.getRedisKey(optionsRedisKey);
-    const modelStr = await Redis.getRedisKey(modelRedisKey);
-    const weights = hubWeights ? hubWeights : await Redis.getBuffer(weightsRedisKey);
+    const options = JSON.parse(optionsStr);
+    const datasetJson = JSON.parse(datasetStr);
 
-    const options = await JSON.parse(optionsStr);
-    var datasetJson = await JSON.parse(datasetStr);
-
-    const width = 100
-    const height = 100
+    const width = 100;
+    const height = 100;
     const depth = 1;
+
     const imageTensorArray = await fetchImages(datasetJson, width, height, depth);
 
-    const flattenedLabelset = await
-        datasetJson.ys
-            .map((data: any) => {
-                return Object.values(data)
-            })
-    const flattenedFeatureset = await
-        datasetJson.xs
-            .map((data: any) => {
-                return Object.values(data)
-            })
+    const flattenedLabelset = datasetJson.ys.map((data: any) => Object.values(data));
+    const flattenedFeatureset = datasetJson.xs.map((data: any) => Object.values(data));
 
-    var xDataset = await tf.data.array(flattenedFeatureset);
-    var yDataset = await tf.data.array(flattenedLabelset);
+    const xDataset = tf.data.array(flattenedFeatureset);
+    const yDataset = tf.data.array(flattenedLabelset);
 
-    if (imageTensorArray) {//multiInput model
-        const image = await tf.data.array(imageTensorArray);
-        xDataset = await tf.data.zip({ input_1: xDataset, input_2: image });
-        yDataset = await tf.data.zip({ output: yDataset });
-        var datasetObj = await tf.data.zip({ xs: xDataset, ys: yDataset })
-    }
-    else {//MLP model
-        var datasetObj = await tf.data.zip({ xs: xDataset, ys: yDataset })
+    let datasetObj;
+    if (imageTensorArray) {
+        const image = tf.data.array(imageTensorArray);
+        const zippedXDataset = tf.data.zip({ input_1: xDataset, input_2: image });
+        const zippedYDataset = tf.data.zip({ output: yDataset });
+        datasetObj = tf.data.zip({ xs: zippedXDataset, ys: zippedYDataset });
+    } else {
+        datasetObj = tf.data.zip({ xs: xDataset, ys: yDataset });
     }
 
-    const modelJson = await JSON.parse(modelStr);
+    const modelJson = JSON.parse(modelStr);
     const EvaluateModel = await MLPRegressionModel.deserialize(modelJson, weights);
     const learningRate = options.optimizer.parameters.learning_rate;
     const optimizer = options.optimizer.name;
     const loss = options.compiler.parameters.loss;
     const metrics = options.compiler.parameters.metrics;
-    await EvaluateModel.compile({ optimizer: tf.train[`${optimizer}`](learningRate), loss: loss, metrics: metrics });
+
+    EvaluateModel.compile({
+        optimizer: tf.train[optimizer](learningRate),
+        loss: loss,
+        metrics: metrics
+    });
+
     const datasetLength = Object.keys(datasetJson.xs).length;
     const evaluationSplit = options.optimizer.parameters.evaluation_split;
     const batchSize = options.optimizer.parameters.batch_size;
     const shuffle = options.optimizer.parameters.shuffle;
-    const dataset = datasetObj.take(Math.floor(datasetLength * evaluationSplit)).shuffle(shuffle).batch(batchSize); //get evaluation dataset
+    const dataset = datasetObj.take(Math.floor(datasetLength * evaluationSplit)).shuffle(shuffle).batch(batchSize);
 
-    let result = await EvaluateModel.evaluateDataset(dataset);
+    const result = await EvaluateModel.evaluateDataset(dataset);
 
     const responseMetrics = {
         loss: result[0].dataSync()[0],
-        acc: result[1].dataSync()[0],
-    }
+        acc: result[1].dataSync()[0]
+    };
 
-    const evaluateResponse = {
+    // Disposal of tensors
+    result[0].dispose();
+    result[1].dispose();
+
+    return {
         job: jobID,
         metrics: responseMetrics
     };
-    return evaluateResponse
 }
 
 async function fetchImages(datasetJson: any, width: number, height: number, depth: number) {
