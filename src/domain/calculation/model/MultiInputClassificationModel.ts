@@ -6,13 +6,12 @@ const tf = require('@tensorflow/tfjs-node');
 * @param {number} mlpInputShape The input shape of the mlp model.
 * @returns {tf.Sequential} The multi layer perceptron regression mode  l.
 */
-async function createMultiInputClassificationModel(mlpInputShape: number[]) {
-  const width = 100;
-  const height = 100;
-  const depth = 1;
+async function createMultiInputClassificationModel(mlpInputShape: [number, number, number, number]) {
+
+  const [length, width, height, depth] = mlpInputShape
 
   // input1
-  const myInput1 = tf.input({ shape: mlpInputShape, name: 'input_1' });
+  const myInput1 = tf.input({ shape: length, name: 'input_1' });
   const myInput1Dense1 = tf.layers.dense({ units: 8, activation: 'relu', name: 'dense_1' }).apply(myInput1);
   const myInput1Dense2 = tf.layers.dense({ units: 8, activation: 'relu', name: 'dense_2' }).apply(myInput1Dense1);
   const output1 = tf.layers.dense({ units: 4, activation: 'relu', name: 'output_1' }).apply(myInput1Dense2)

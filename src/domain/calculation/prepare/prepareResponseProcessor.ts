@@ -30,6 +30,13 @@ async function getPrepareResponse(selector: Selector,
     const outputs = options.outputs;
     const result = queryAndResult.result;
 
+    const [width, height, depth] = options.transforms?.resizeImage ?
+        [options.transforms.resizeImage.width,
+        options.transforms.resizeImage.height,
+        options.transforms.resizeImage.depth] : [100, 100, 1]
+
+    console.log(`⚡️[coda-learning-api]: Resizing to ${width}x${height}x${depth}`)
+
     dicomUIDFieldTypes(selector, fieldTypes);
     const encodedDataset = await encodeDataset(result, fieldTypes, jobID, inputs, outputs);
     var dataset = minMaxScaleContinuous(encodedDataset, fieldTypes);
@@ -39,7 +46,7 @@ async function getPrepareResponse(selector: Selector,
     const imagingUIDinfo = dataset.imageUIDlabel;
 
     if (imagingUIDinfo) {
-        var TrainingModel = await MultiInputClassificationModel.createMultiInputClassificationModel([--inputs.length])
+        var TrainingModel = await MultiInputClassificationModel.createMultiInputClassificationModel([--inputs.length, width, height, depth])
     }
     else {
         var TrainingModel = await MLPRegressionModel.createMLPRegressionModel([inputs.length]);

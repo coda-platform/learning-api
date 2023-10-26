@@ -12,6 +12,7 @@ export default interface Options {
         resizeImage: {
             width: number;
             height: number;
+            depth: number;
         }
     }
 }

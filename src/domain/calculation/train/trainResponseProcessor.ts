@@ -25,8 +25,6 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
         options.transforms.resizeImage.height,
         options.transforms.resizeImage.depth] : [100, 100, 1]
 
-    console.log(`⚡️[coda-learning-api]: Resizing to ${width}x${height}x${depth}`)
-
     const imageTensorArray = await fetchImages(datasetJson, width, height, depth);
 
     const flattenedLabelset = datasetJson.ys.map((data: any) => Object.values(data));
