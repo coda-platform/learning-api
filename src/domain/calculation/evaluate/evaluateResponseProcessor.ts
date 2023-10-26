@@ -23,8 +23,8 @@ async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<Eval
     const options = await JSON.parse(optionsStr);
     var datasetJson = await JSON.parse(datasetStr);
 
-    const width = 512
-    const height = 512
+    const width = 100
+    const height = 100
     const depth = 1;
     const imageTensorArray = await fetchImages(datasetJson, width, height, depth);
 
