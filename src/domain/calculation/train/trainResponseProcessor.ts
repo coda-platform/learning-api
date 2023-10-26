@@ -20,7 +20,12 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
     const options = await JSON.parse(optionsStr);
     const datasetJson = await JSON.parse(datasetStr);
 
-    const imageTensorArray = await fetchImages(datasetJson, 100, 100, 1);
+    const [width, height, depth] = options.transforms?.resizeImage ?
+        [options.transforms.resizeImage.width,
+        options.transforms.resizeImage.height,
+        options.transforms.resizeImage.depth] : [100, 100, 1]
+
+    const imageTensorArray = await fetchImages(datasetJson, width, height, depth);
 
     const flattenedLabelset = datasetJson.ys.map((data: any) => Object.values(data));
     const flattenedFeatureset = datasetJson.xs.map((data: any) => Object.values(data));
@@ -96,9 +101,9 @@ async function fetchImages(datasetJson: any, width: number, height: number, dept
         const ubase64Image = await redisDataProcessor.getRedisKey(imageRedisKey);
         const imageBuffer = new Uint8Array(Buffer.from(ubase64Image, 'base64'));
 
-        let decodedImage = await tf.node.decodeImage(imageBuffer);
-        const resizedImage = await tf.image.resizeNearestNeighbor(decodedImage, [width, height]);
-        const normalizedImage = await tf.cast(resizedImage, 'float32').div(tf.scalar(255.0));
+        let decodedImage = tf.node.decodeImage(imageBuffer);
+        const resizedImage = tf.image.resizeNearestNeighbor(decodedImage, [width, height]);
+        const normalizedImage = tf.cast(resizedImage, 'float32').div(tf.scalar(255.0));
 
         // Dispose intermediate tensors
         tf.dispose([decodedImage, resizedImage]);

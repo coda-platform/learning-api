@@ -8,4 +8,10 @@ export default interface Options {
     outputs: string[];
     optimizer: Optimizer;
     compiler: Compiler;
+    transforms?: {
+        resizeImage: {
+            width: number;
+            height: number;
+        }
+    }
 }

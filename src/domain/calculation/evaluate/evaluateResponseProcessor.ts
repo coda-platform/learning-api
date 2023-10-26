@@ -20,9 +20,10 @@ async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<Eval
     const options = JSON.parse(optionsStr);
     const datasetJson = JSON.parse(datasetStr);
 
-    const width = 100;
-    const height = 100;
-    const depth = 1;
+    const [width, height, depth] = options.transforms?.resizeImage ?
+        [options.transforms.resizeImage.width,
+        options.transforms.resizeImage.height,
+        options.transforms.resizeImage.depth] : [100, 100, 1]
 
     const imageTensorArray = await fetchImages(datasetJson, width, height, depth);
 
