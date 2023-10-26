@@ -198,36 +198,6 @@ async function encodeUID(dicomSeriesUID: string, jobID: string) {
     return redisKey;
 }
 
-async function mockEncodeUID(dicomSeriesUID: string, jobID: string) {
-    dicomSeriesUID = "1.2.840.113619.2.176.2025.1499492.7391.1171285944.393" //temp
-    var instanceUID = "1.3.6.1.4.1.14519.5.2.1.2193.7172.863063138942128758032875897774"
-    while (instanceUID == "1.3.6.1.4.1.14519.5.2.1.2193.7172.863063138942128758032875897774" || instanceUID == "1.3.6.1.4.1.14519.5.2.1.2193.7172.227588763982019545194084732872") {
-        const studies = await dicomProxy.getAllStudies();
-        const studiesURL = studies.map((s: any) => {
-            return s["0020000D"]["Value"][0];
-        })
-        const studyURL = studiesURL[Math.floor(Math.random() * studiesURL.length)]
-        const series = await dicomProxy.getAllSeries(studyURL);
-        const seriesURL = series.map((s: any) => {
-            return s["0020000E"]["Value"][0];
-        })
-        dicomSeriesUID = seriesURL[Math.floor(Math.random() * seriesURL.length)];
-        const seriesMetadata = await dicomProxy.getStudyUID(dicomSeriesUID);
-        const studyUID = seriesMetadata[0][`0020000D`].Value[0];
-        const instances = await dicomProxy.getInstanceUID(dicomSeriesUID, studyUID);
-        instanceUID = instances[Math.floor(Math.random() * instances.length)][`00080018`].Value[0] //temp
-    }
-    const imgData = await dicomProxy.getInstanceFrame(instanceUID);
-
-    const utf8ImageData = Buffer.from(imgData).toString("base64"); //save to int8
-    var redisKey = `images/${jobID}/${dicomSeriesUID}`;
-    redisKey = await redisDataProcessor.setRedisJobId(utf8ImageData, redisKey);
-    return redisKey;
-}
-
-//todo: augment image data(flip, add noise, change brightness, shift)
-//balance output categories
-
 function hashCode(value: string) {
     let h = 0;
     for (let i = 0; i < value.length; i++)
@@ -261,20 +231,40 @@ function removeEncodedFieldFromInputOutput(inputs: string[], outputs: string[], 
 }
 
 function minMaxScaleContinuous(dataset: any, fieldTypes: Map<Field, FieldInfo>) {
-    const fields = Array.from(fieldTypes.values()).filter(f => f.type == "FLOAT")
-    // X_std = (X - X.min) / (X.max - X.min)
-    // X_scaled = X_std * (max - min) + min -> use if min max of scale is not 0,1
+    const fields = Array.from(fieldTypes.values()).filter(f => f.type == "FLOAT");
+
+    // Initialize min and max values for each field
+    const minMaxValues: { [key: string]: { min: number, max: number } } = {};
     fields.forEach(field => {
-        let xMin = Math.min(...dataset.map((d: any) => d[field.name]));
-        let xMax = Math.max(...dataset.map((d: any) => d[field.name]));
-        dataset = dataset.map((data: any) => {
-            let x = data[field.name];
-            let xStd = (x - xMin) / (xMax - xMin);
+        minMaxValues[field.name] = { min: Infinity, max: -Infinity };
+    });
+
+    // Determine min and max values for each field in a single pass
+    dataset.forEach((data: any) => {
+        fields.forEach(field => {
+            const value = data[field.name];
+            if (value < minMaxValues[field.name].min) {
+                minMaxValues[field.name].min = value;
+            }
+            if (value > minMaxValues[field.name].max) {
+                minMaxValues[field.name].max = value;
+            }
+        });
+    });
+
+    // Scale values
+    dataset = dataset.map((data: any) => {
+        fields.forEach(field => {
+            const x = data[field.name];
+            const xMin = minMaxValues[field.name].min;
+            const xMax = minMaxValues[field.name].max;
+            const xStd = (x - xMin) / (xMax - xMin);
             data[field.name] = xStd;
-            return data
-        })
-    })
-    return dataset
+        });
+        return data;
+    });
+
+    return dataset;
 }
 
 export default {
