@@ -39,7 +39,7 @@ async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<Eval
         const zippedXDataset = tf.data.zip({ input_1: xDataset, input_2: image });
         const zippedYDataset = tf.data.zip({ output: yDataset });
         datasetObj = tf.data.zip({ xs: zippedXDataset, ys: zippedYDataset });
-        image.dispose();
+        tf.dispose([image])
     } else {
         datasetObj = tf.data.zip({ xs: xDataset, ys: yDataset });
     }
@@ -92,10 +92,10 @@ async function fetchImages(datasetJson: any, width: number, height: number, dept
         let result = tf.node.decodeImage(imageBuffer);
 
         const resizedImage = tf.image.resizeNearestNeighbor(result, [width, height]);
-        result.dispose(); // Dispose the initial result after resizing
+        tf.dispose([result])
 
         const normalizedImage = resizedImage.cast('float32').div(tf.scalar(255.0));
-        resizedImage.dispose(); // Dispose the resized image after normalization
+        tf.dispose([resizedImage])
 
         delete obj[label];
         return normalizedImage;
