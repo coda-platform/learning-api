@@ -10,10 +10,9 @@ router.post('/prepare', async (req, res, next) => {
     try {
         const body: PrepareRequestBody = req.body;
         const response = await learningServices.getPrepare(body);
-        console.log(response);
         res.send(response);
     }
-    catch (error:any) {
+    catch (error: any) {
         console.error(error.stack)
         next(error);
     }
@@ -25,7 +24,7 @@ router.post('/train', async (req, res, next) => {
         const response = await learningServices.getTrain(body);
         res.send(response);
     }
-    catch (error:any) {
+    catch (error: any) {
         console.error(error.stack)
         next(error);
     }
@@ -37,7 +36,7 @@ router.post('/evaluate', async (req, res, next) => {
         const response = await learningServices.getEvaluate(body);
         res.send(response);
     }
-    catch (error:any) {
+    catch (error: any) {
         console.error(error.stack)
         next(error);
     }

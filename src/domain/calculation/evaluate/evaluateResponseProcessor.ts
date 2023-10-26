@@ -41,7 +41,6 @@ async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<Eval
 
     var xDataset = await tf.data.array(flattenedFeatureset);
     var yDataset = await tf.data.array(flattenedLabelset);
-    //xDataset.forEachAsync((e:any) => console.log(JSON.stringify(e)))
 
     if (imageTensorArray) {//multiInput model
         const image = await tf.data.array(imageTensorArray);
@@ -52,7 +51,6 @@ async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<Eval
     else {//MLP model
         var datasetObj = await tf.data.zip({ xs: xDataset, ys: yDataset })
     }
-    //await datasetObj.forEachAsync((e:any) => console.log(JSON.stringify(e)));
 
     const modelJson = await JSON.parse(modelStr);
     const EvaluateModel = await MLPRegressionModel.deserialize(modelJson, weights);

@@ -16,4 +16,4 @@ RUN npm rebuild @tensorflow/tfjs-node --build-addon-from-source
 RUN npm install pm2 -g
 
 EXPOSE 8084
-CMD ["pm2-runtime", "build/index.js", "--node-args=\"--max-old-space-size=4096\""]
+CMD ["pm2-runtime", "build/index.js", "--node-args=\"--max-old-space-size=8192\""]
