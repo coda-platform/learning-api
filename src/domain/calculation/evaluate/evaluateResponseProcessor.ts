@@ -7,7 +7,7 @@ import redisDataProcessor from "../../../infrastructure/redis/redisDataProcessor
 const tf = require('@tensorflow/tfjs-node');
 
 async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<EvaluateResponse> {
-    
+
     let redisKeys: any = await Redis.getRedisKey(jobID);
     redisKeys = await JSON.parse(redisKeys);
     const datasetRedisKey = redisKeys.datasetRedisKey;
@@ -45,7 +45,7 @@ async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<Eval
 
     if (imageTensorArray) {//multiInput model
         const image = await tf.data.array(imageTensorArray);
-        xDataset = await tf.data.zip({ input1: xDataset, input2: image });
+        xDataset = await tf.data.zip({ input_1: xDataset, input_2: image });
         yDataset = await tf.data.zip({ output: yDataset });
         var datasetObj = await tf.data.zip({ xs: xDataset, ys: yDataset })
     }
@@ -60,7 +60,7 @@ async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<Eval
     const optimizer = options.optimizer.name;
     const loss = options.compiler.parameters.loss;
     const metrics = options.compiler.parameters.metrics;
-    await EvaluateModel.compile({optimizer: tf.train[`${optimizer}`](learningRate), loss: loss, metrics: metrics});
+    await EvaluateModel.compile({ optimizer: tf.train[`${optimizer}`](learningRate), loss: loss, metrics: metrics });
     const datasetLength = Object.keys(datasetJson.xs).length;
     const evaluationSplit = options.optimizer.parameters.evaluation_split;
     const batchSize = options.optimizer.parameters.batch_size;

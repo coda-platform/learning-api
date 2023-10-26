@@ -45,7 +45,7 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
 
     if (imageTensorArray) {//multiInput model
         const image = await tf.data.array(imageTensorArray);
-        xDataset = await tf.data.zip({ input1: xDataset, input2: image });
+        xDataset = await tf.data.zip({ input_1: xDataset, input_2: image });
         yDataset = await tf.data.zip({ output: yDataset });
         var datasetObj = await tf.data.zip({ xs: xDataset, ys: yDataset })
     }

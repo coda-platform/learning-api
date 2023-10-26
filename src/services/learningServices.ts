@@ -13,7 +13,7 @@ import EvaluateRequestBody from "../models/request/evaluateRequestBody";
 import evaluateResponseProcessor from "../domain/calculation/evaluate/evaluateResponseProcessor"
 
 async function getFieldTypeAndErrors(prepareRequest: PrepareRequestBody, filterFieldsNoErrors: Map<Filter, FieldInfo>) {
-    console.log(prepareRequest)
+
     const fields = await fieldsRepository.getFieldsDataFromRequest(prepareRequest, filterFieldsNoErrors);
 
     const fieldRequestErrors = new Array<PrepareResponse>();
