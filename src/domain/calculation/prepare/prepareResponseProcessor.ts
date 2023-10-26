@@ -62,6 +62,7 @@ async function getPrepareResponse(selector: Selector,
         count: dataset.xs.length,
         model: JSON.stringify(modelJson),
         weights: weights,
+        options
     }
     return redisResult;
 }
