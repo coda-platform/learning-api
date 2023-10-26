@@ -69,7 +69,7 @@ async function getPrepareResponse(selector: Selector,
 async function encodeDataset(dataset: any, fieldTypes: Map<Field, FieldInfo>, jobID: string, inputs: string[], outputs: string[]) {
     const fieldsInfo = Array.from(fieldTypes.values());
     const fields = Array.from(fieldTypes.keys());
-    const encodedDataset = await Promise.all(dataset.map(async (obj: any) => {
+    await Promise.all(dataset.map(async (obj: any) => {
         for (let i = 0; i < fieldsInfo.length; i++) {
             let fieldName = fieldsInfo[i].name;
             let fieldType = fieldsInfo[i].type;
