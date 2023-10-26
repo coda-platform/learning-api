@@ -33,7 +33,7 @@ function setFilterFieldTypes(filters: Filter[], response: any[], fieldsAndFieldR
 }
 
 async function getSelectorFieldInfos(selector: Selector, filterType: Map<Filter, FieldInfo | Error>) {
-    const filters = selector.filters ?? []
+    const filters = selector ? (selector.filters ?? []) : []
     try {
         if (filters.length > 0) {
             var filterTypesInSelector: boolean = true;
