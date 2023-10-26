@@ -10,8 +10,6 @@ router.post('/prepare', async (req, res, next) => {
     try {
         const body: PrepareRequestBody = req.body;
         const response = await learningServices.getPrepare(body);
-        console.log(`⚡️[coda-learning-api]: Launching job with options: \n` +
-            response.options ? JSON.stringify(response.options, null, 2) : "Options were empty")
         res.send(response);
     }
     catch (error: any) {
