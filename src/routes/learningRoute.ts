@@ -22,6 +22,7 @@ router.post('/train', async (req, res, next) => {
     try {
         const body: TrainRequestBody = req.body;
         const response = await learningServices.getTrain(body);
+        console.log(response.options ?? "Options were empty")
         res.send(response);
     }
     catch (error: any) {

@@ -90,7 +90,8 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
     return {
         job: jobID,
         weights: trainedWeights,
-        metrics: responseMetrics
+        metrics: responseMetrics,
+        options
     };
 }
 
