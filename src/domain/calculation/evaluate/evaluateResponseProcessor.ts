@@ -38,9 +38,13 @@ async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<Eval
         const zippedXDataset = tf.data.zip({ input_1: xDataset, input_2: image });
         const zippedYDataset = tf.data.zip({ output: yDataset });
         datasetObj = tf.data.zip({ xs: zippedXDataset, ys: zippedYDataset });
+        image.dispose();
     } else {
         datasetObj = tf.data.zip({ xs: xDataset, ys: yDataset });
     }
+
+    xDataset.dispose()
+    yDataset.dispose()
 
     const modelJson = JSON.parse(modelStr);
     const EvaluateModel = await MLPRegressionModel.deserialize(modelJson, weights);
@@ -71,6 +75,7 @@ async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<Eval
     // Disposal of tensors
     result[0].dispose();
     result[1].dispose();
+    dataset.dispose();
 
     return {
         job: jobID,
@@ -79,21 +84,28 @@ async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<Eval
 }
 
 async function fetchImages(datasetJson: any, width: number, height: number, depth: number) {
-    if (datasetJson.imageUIDlabel) {
-        const label = fieldLabelFormatter.formatLabel(datasetJson.imageUIDlabel);
-        const imgDataset = await Promise.all(datasetJson.xs.map(async (obj: any) => {
-            const imageRedisKey = obj[label];
-            const ubase64Image = await redisDataProcessor.getRedisKey(imageRedisKey);
-            const imageBuffer = new Uint8Array(Buffer.from(ubase64Image, 'base64'));
-            var result = await tf.node.decodeImage(imageBuffer);
-            result = await tf.image.resizeNearestNeighbor(result, [width, height]);
-            result = await ((tf.cast(result, 'float32').div(tf.scalar(255.0))));
-            delete obj[label]
-            return result;
-        }));
-        return imgDataset;
-    }
-    return
+    if (!datasetJson.imageUIDlabel) return;
+
+    const label = fieldLabelFormatter.formatLabel(datasetJson.imageUIDlabel);
+
+    const imgDataset = await Promise.all(datasetJson.xs.map(async (obj: any) => {
+        const imageRedisKey = obj[label];
+        const ubase64Image = await redisDataProcessor.getRedisKey(imageRedisKey);
+        const imageBuffer = new Uint8Array(Buffer.from(ubase64Image, 'base64'));
+
+        let result = tf.node.decodeImage(imageBuffer);
+
+        const resizedImage = tf.image.resizeNearestNeighbor(result, [width, height]);
+        result.dispose(); // Dispose the initial result after resizing
+
+        const normalizedImage = resizedImage.cast('float32').div(tf.scalar(255.0));
+        resizedImage.dispose(); // Dispose the resized image after normalization
+
+        delete obj[label];
+        return normalizedImage;
+    }));
+
+    return imgDataset;
 }
 
 export default {
