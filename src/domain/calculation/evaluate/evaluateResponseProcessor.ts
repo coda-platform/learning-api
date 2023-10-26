@@ -44,9 +44,6 @@ async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<Eval
         datasetObj = tf.data.zip({ xs: xDataset, ys: yDataset });
     }
 
-    xDataset.dispose()
-    yDataset.dispose()
-
     const modelJson = JSON.parse(modelStr);
     const EvaluateModel = await MLPRegressionModel.deserialize(modelJson, weights);
     const learningRate = options.optimizer.parameters.learning_rate;
@@ -73,10 +70,8 @@ async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<Eval
         acc: result[1].dataSync()[0]
     };
 
-    // Disposal of tensors
-    result[0].dispose();
-    result[1].dispose();
-    dataset.dispose();
+    tf.dispose([result, dataset, xDataset, yDataset, datasetObj,
+        dataset, datasetObj, EvaluateModel, imageTensorArray]);
 
     return {
         job: jobID,
