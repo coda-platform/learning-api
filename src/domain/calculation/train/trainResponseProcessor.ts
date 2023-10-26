@@ -40,12 +40,13 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
     const modelJson = await JSON.parse(modelStr);
     const TrainingModel = await MLPRegressionModel.deserialize(modelJson, weights);
 
-    const { learning_rate, optimizer, validation_split, evaluation_split, batch_size, epochs, shuffle } = options.optimizer.parameters;
+    const { learning_rate, validation_split, evaluation_split, batch_size, epochs, shuffle } = options.optimizer.parameters;
+    const optimizer = options.optimizer.name;
     const { loss, metrics } = options.compiler.parameters;
 
     await TrainingModel.compile({
         // @ts-ignore
-        optimizer: tf.train[`${optimizer.name}`](learning_rate),
+        optimizer: tf.train[`${optimizer}`](learning_rate),
         loss: loss,
         metrics: metrics
     });
