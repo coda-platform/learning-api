@@ -45,7 +45,7 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
 
     await TrainingModel.compile({
         // @ts-ignore
-        optimizer: tf.train[optimizer](learning_rate),
+        optimizer: tf.train[`${optimizer.name}`](learning_rate),
         loss: loss,
         metrics: metrics
     });
