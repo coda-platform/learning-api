@@ -33,26 +33,27 @@ function setFilterFieldTypes(filters: Filter[], response: any[], fieldsAndFieldR
 }
 
 async function getSelectorFieldInfos(selector: Selector, filterType: Map<Filter, FieldInfo | Error>) {
+    const filters = selector.filters ?? []
     try {
-        if (selector.filters.length > 0) {
+        if (filters.length > 0) {
             var filterTypesInSelector: boolean = true;
-            selector.filters.filter(filter => {
+            filters.filter(filter => {
                 if (!filter.type)
                     filterTypesInSelector = false
             })
 
             if (filterTypesInSelector) {
                 var selectorFilterTypes: any[] = [];
-                selector.filters.forEach(filter => {
+                filters.forEach(filter => {
                     const fieldPathNormalized = fieldPathFormatter.formatPath(filter.path);
                     selectorFilterTypes.push({ [fieldPathNormalized]: filter.type })
                 })
-                setFilterFieldTypes(selector.filters, selectorFilterTypes, filterType);
+                setFilterFieldTypes(filters, selectorFilterTypes, filterType);
             }
             else {
                 const query = getFilterFieldTypesQuery.getQuery(selector);
                 const selectorFilterTypes = await aidboxProxy.executeQuery(query);
-                setFilterFieldTypes(selector.filters, selectorFilterTypes, filterType);
+                setFilterFieldTypes(filters, selectorFilterTypes, filterType);
             }
         }
 
@@ -62,7 +63,7 @@ async function getSelectorFieldInfos(selector: Selector, filterType: Map<Filter,
         await getSelectorFieldInfos(joinSelector, filterType);
     }
     catch (error) {
-        for (let filter of selector.filters) {
+        for (let filter of filters) {
             filterType.set(filter, error as any);
         }
     }
