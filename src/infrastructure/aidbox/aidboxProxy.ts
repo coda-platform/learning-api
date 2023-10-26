@@ -18,7 +18,6 @@ const axiosConfig = {
 
 async function executeQuery(query: string): Promise<any> {
     try {
-        console.log(query)
         const response = await instance.post('$sql?_format=json',
             [query],
             axiosConfig);
