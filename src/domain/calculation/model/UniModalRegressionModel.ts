@@ -1,11 +1,7 @@
 const tf = require('@tensorflow/tfjs-node');
-/**
-* Builds and returns Multi Layer Perceptron Regression Model.
-*
-* @param {number} inputShape The input shape of the model.
-* @returns {tf.Sequential} The multi layer perceptron regression mode  l.
-*/
-async function createMLPRegressionModel(inputShape: number[]) {
+
+// Builds and returns a Multi Layer Perceptron Model with tabular inputs.
+async function createUniModalRegressionModel(inputShape: number[]) {
   const model = tf.sequential();
   model.add(tf.layers.dense({
     inputShape: inputShape,
@@ -58,5 +54,5 @@ async function deserialize(json: any, weights: any) {
 }
 
 export default {
-  createMLPRegressionModel, serialize, deserialize, saveWeights
+  createUniModalRegressionModel, serialize, deserialize, saveWeights
 }

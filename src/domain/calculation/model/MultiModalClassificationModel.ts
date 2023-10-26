@@ -1,12 +1,8 @@
 export type variableType = 'categorical' | 'continuous' | 'tensor'
 const tf = require('@tensorflow/tfjs-node');
-/**
-* Builds and returns Multi Layer Perceptron Regression Model.
-*
-* @param {number} mlpInputShape The input shape of the mlp model.
-* @returns {tf.Sequential} The multi layer perceptron regression mode  l.
-*/
-async function createMultiInputClassificationModel(mlpInputShape: [number, number, number, number]) {
+
+// Builds and returns a Multi Layer Perceptron Model with tabular and pixel inputs.
+async function createMultiModalClassificationModel(mlpInputShape: [number, number, number, number]) {
 
   const [length, width, height, depth] = mlpInputShape
 
@@ -59,5 +55,5 @@ async function deserialize(json: any, weights: any) {
 }
 
 export default {
-  createMultiInputClassificationModel, serialize, deserialize, saveWeights
+  createMultiModalClassificationModel, serialize, deserialize, saveWeights
 }

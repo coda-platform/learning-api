@@ -3,7 +3,7 @@ import PrepareResponse from "../../../models/response/prepareResponse";
 import Selector from "../../../models/request/selector";
 import QueryDataResults from "../../queries/queryDataResults";
 import Options from "../../../models/request/options"
-import MLPRegressionModel from "../model/MLPRegressionModel";
+import UniModalRegressionModel from "../model/UniModalRegressionModel";
 import Field from "../../../models/request/field";
 import FieldInfo from "../../../models/fieldInfo";
 import fieldLabelFormatter from "../../queries/fieldLabelFormatter";
@@ -11,7 +11,7 @@ import dicomUIDFields from "../../resourceDicomUIDFields";
 import dicomProxy from "../../../infrastructure/dicom/dicomProxy";
 import redisDataProcessor from "../../../infrastructure/redis/redisDataProcessor";
 import oneHotEncodedFields from "../../oneHotEncodedFields";
-import MultiInputClassificationModel from "../model/MultiInputClassificationModel";
+import MultiModalClassificationModel from "../model/MultiModalClassificationModel";
 const tf = require('@tensorflow/tfjs-node');
 
 async function getPrepareResponse(selector: Selector,
@@ -45,15 +45,19 @@ async function getPrepareResponse(selector: Selector,
     await setUIDInfo(selector, options, dataset)
     const imagingUIDinfo = dataset.imageUIDlabel;
 
+    let modelJson;
+    let weights;
+
     if (imagingUIDinfo) {
-        var TrainingModel = await MultiInputClassificationModel.createMultiInputClassificationModel([--inputs.length, width, height, depth])
+        const TrainingModel = await MultiModalClassificationModel.createMultiModalClassificationModel([--inputs.length, width, height, depth])
+        modelJson = await MultiModalClassificationModel.serialize(TrainingModel);
+        weights = await MultiModalClassificationModel.saveWeights(TrainingModel);
     }
     else {
-        var TrainingModel = await MLPRegressionModel.createMLPRegressionModel([inputs.length]);
+        const TrainingModel = await UniModalRegressionModel.createUniModalRegressionModel([inputs.length]);
+        modelJson = await UniModalRegressionModel.serialize(TrainingModel);
+        weights = await UniModalRegressionModel.saveWeights(TrainingModel);
     }
-
-    const modelJson = await MLPRegressionModel.serialize(TrainingModel);
-    const weights = await MLPRegressionModel.saveWeights(TrainingModel);
 
     const response = {
         datasetRedisKey: await Redis.setRedisKey(JSON.stringify(dataset)),

@@ -2,7 +2,7 @@ import redisDataProcessor from "../../../infrastructure/redis/redisDataProcessor
 import Redis from "../../../infrastructure/redis/redisDataProcessor";
 import TrainResponse from "../../../models/response/trainResponse";
 import fieldLabelFormatter from "../../queries/fieldLabelFormatter";
-import MLPRegressionModel from "../model/MLPRegressionModel";
+import UniModalRegressionModel from "../model/UniModalRegressionModel";
 
 import * as tf from '@tensorflow/tfjs-node';
 
@@ -43,7 +43,7 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
     datasetObj = tf.data.zip({ xs: xDataset, ys: yDataset });
 
     const modelJson = await JSON.parse(modelStr);
-    const TrainingModel = await MLPRegressionModel.deserialize(modelJson, weights);
+    const TrainingModel = await UniModalRegressionModel.deserialize(modelJson, weights);
 
     const { learning_rate, validation_split, evaluation_split, batch_size, epochs, shuffle } = options.optimizer.parameters;
     const optimizer = options.optimizer.name;
@@ -80,7 +80,7 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
         val_loss: history.history.val_loss[epochs - 1],
     };
 
-    const trainedWeights = await MLPRegressionModel.saveWeights(TrainingModel);
+    const trainedWeights = await UniModalRegressionModel.saveWeights(TrainingModel);
 
     // Explicitly dispose resources
     tf.dispose([xDataset, yDataset, datasetObj, dataset, trainDataset, validationDataset, TrainingModel, imageTensorArray]);

@@ -1,5 +1,5 @@
 import Redis from "../../../infrastructure/redis/redisDataProcessor";
-import MLPRegressionModel from "../model/MLPRegressionModel";
+import UniModalRegressionModel from "../model/UniModalRegressionModel";
 import EvaluateResponse from "../../../models/response/evaluateResponse";
 import fieldLabelFormatter from "../../queries/fieldLabelFormatter";
 import redisDataProcessor from "../../../infrastructure/redis/redisDataProcessor";
@@ -45,7 +45,7 @@ async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<Eval
     }
 
     const modelJson = JSON.parse(modelStr);
-    const EvaluateModel = await MLPRegressionModel.deserialize(modelJson, weights);
+    const EvaluateModel = await UniModalRegressionModel.deserialize(modelJson, weights);
     const learningRate = options.optimizer.parameters.learning_rate;
     const optimizer = options.optimizer.name;
     const loss = options.compiler.parameters.loss;
