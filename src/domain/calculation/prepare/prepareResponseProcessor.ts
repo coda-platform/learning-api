@@ -12,7 +12,6 @@ import dicomProxy from "../../../infrastructure/dicom/dicomProxy";
 import redisDataProcessor from "../../../infrastructure/redis/redisDataProcessor";
 import oneHotEncodedFields from "../../oneHotEncodedFields";
 import MultiModalClassificationModel from "../model/MultiModalClassificationModel";
-const tf = require('@tensorflow/tfjs-node');
 
 async function getPrepareResponse(selector: Selector,
     options: Options,
@@ -49,14 +48,14 @@ async function getPrepareResponse(selector: Selector,
     let weights;
 
     if (imagingUIDinfo) {
-        const TrainingModel = await MultiModalClassificationModel.createMultiModalClassificationModel([--inputs.length, width, height, depth])
-        modelJson = await MultiModalClassificationModel.serialize(TrainingModel);
-        weights = await MultiModalClassificationModel.saveWeights(TrainingModel);
+        const trainingModel = await MultiModalClassificationModel.createMultiModalClassificationModel([--inputs.length, width, height, depth])
+        modelJson = await MultiModalClassificationModel.serialize(trainingModel);
+        weights = await MultiModalClassificationModel.saveWeights(trainingModel);
     }
     else {
-        const TrainingModel = await UniModalRegressionModel.createUniModalRegressionModel([inputs.length]);
-        modelJson = await UniModalRegressionModel.serialize(TrainingModel);
-        weights = await UniModalRegressionModel.saveWeights(TrainingModel);
+        const trainingModel = await UniModalRegressionModel.createUniModalRegressionModel([inputs.length]);
+        modelJson = await UniModalRegressionModel.serialize(trainingModel);
+        weights = await UniModalRegressionModel.saveWeights(trainingModel);
     }
 
     const response = {

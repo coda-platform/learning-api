@@ -38,13 +38,16 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
     const modelJson = await JSON.parse(modelStr);
 
     let TrainingModel;
+    let trainingModel;
     if (imageTensorArray) {
         const image = tf.data.array(imageTensorArray);
         xDataset = tf.data.zip({ input_1: xDataset, input_2: image });
         yDataset = tf.data.zip({ output: yDataset });
-        TrainingModel = await MultiModalClassificationModel.deserialize(modelJson, weights);
+        TrainingModel = MultiModalClassificationModel;
+        trainingModel = await MultiModalClassificationModel.deserialize(modelJson, weights);
     } else {
-        TrainingModel = await UniModalRegressionModel.deserialize(modelJson, weights);
+        TrainingModel = UniModalRegressionModel;
+        trainingModel = await UniModalRegressionModel.deserialize(modelJson, weights);
     }
 
     datasetObj = tf.data.zip({ xs: xDataset, ys: yDataset });
@@ -53,7 +56,7 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
     const optimizer = options.optimizer.name;
     const { loss, metrics } = options.compiler.parameters;
 
-    await TrainingModel.compile({
+    await trainingModel.compile({
         // @ts-ignore
         optimizer: tf.train[`${optimizer}`](learning_rate),
         loss: loss,
@@ -68,7 +71,7 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
     const trainDataset = dataset.take(trainBatches);
     const validationDataset = dataset.skip(trainBatches);
 
-    const history = await TrainingModel.fitDataset(
+    const history = await trainingModel.fitDataset(
         trainDataset,
         {
             epochs: epochs,
@@ -84,10 +87,10 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
         val_loss: history.history.val_loss[epochs - 1],
     };
 
-    const trainedWeights = await TrainingModel.saveWeights(TrainingModel);
+    const trainedWeights = await TrainingModel.saveWeights(trainingModel);
 
     // Explicitly dispose resources
-    tf.dispose([xDataset, yDataset, datasetObj, dataset, trainDataset, validationDataset, TrainingModel, imageTensorArray]);
+    tf.dispose([imageTensorArray]);
 
     return {
         job: jobID,

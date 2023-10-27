@@ -6,7 +6,7 @@ async function createUniModalRegressionModel(inputShape: number[]) {
   model.add(tf.layers.dense({
     inputShape: inputShape,
     activation: 'relu',
-    units: 20,
+    units: 32,
   }));
   model.add(tf.layers.dropout({
     rate: 0.1,
@@ -16,10 +16,10 @@ async function createUniModalRegressionModel(inputShape: number[]) {
     units: 10,
   }));
   model.add(tf.layers.dense({
-    activation: 'sigmoid',
+    activation: 'relu',
     units: 1,
   }));
-  model.compile({ optimizer: tf.train.adam(0.0005), loss: 'meanSquaredError' });
+  model.compile({ optimizer: tf.train.adam(10e-5), loss: 'meanSquaredError' });
   return model;
 }
 

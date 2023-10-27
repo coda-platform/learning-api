@@ -5,7 +5,7 @@ import fieldLabelFormatter from "../../queries/fieldLabelFormatter";
 import redisDataProcessor from "../../../infrastructure/redis/redisDataProcessor";
 import MultiModalClassificationModel from "../model/MultiModalClassificationModel";
 
-const tf = require('@tensorflow/tfjs-node');
+import * as tf from '@tensorflow/tfjs-node';
 
 async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<EvaluateResponse> {
     const redisKeysStr = await Redis.getRedisKey(jobID);
@@ -44,7 +44,6 @@ async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<Eval
         const zippedXDataset = tf.data.zip({ input_1: xDataset, input_2: image });
         const zippedYDataset = tf.data.zip({ output: yDataset });
         datasetObj = tf.data.zip({ xs: zippedXDataset, ys: zippedYDataset });
-        tf.dispose([image])
         EvaluateModel = await MultiModalClassificationModel.deserialize(modelJson, weights);
     } else {
         datasetObj = tf.data.zip({ xs: xDataset, ys: yDataset });
@@ -57,6 +56,7 @@ async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<Eval
     const metrics = options.compiler.parameters.metrics;
 
     EvaluateModel.compile({
+        // @ts-ignore
         optimizer: tf.train[optimizer](learningRate),
         loss: loss,
         metrics: metrics
