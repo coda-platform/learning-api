@@ -3,6 +3,7 @@ import UniModalRegressionModel from "../model/UniModalRegressionModel";
 import EvaluateResponse from "../../../models/response/evaluateResponse";
 import fieldLabelFormatter from "../../queries/fieldLabelFormatter";
 import redisDataProcessor from "../../../infrastructure/redis/redisDataProcessor";
+import MultiModalClassificationModel from "../model/MultiModalClassificationModel";
 
 const tf = require('@tensorflow/tfjs-node');
 
@@ -33,19 +34,23 @@ async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<Eval
     const xDataset = tf.data.array(flattenedFeatureset);
     const yDataset = tf.data.array(flattenedLabelset);
 
+    const modelJson = JSON.parse(modelStr);
+
     let datasetObj;
+    let EvaluateModel;
+
     if (imageTensorArray) {
         const image = tf.data.array(imageTensorArray);
         const zippedXDataset = tf.data.zip({ input_1: xDataset, input_2: image });
         const zippedYDataset = tf.data.zip({ output: yDataset });
         datasetObj = tf.data.zip({ xs: zippedXDataset, ys: zippedYDataset });
         tf.dispose([image])
+        EvaluateModel = await MultiModalClassificationModel.deserialize(modelJson, weights);
     } else {
         datasetObj = tf.data.zip({ xs: xDataset, ys: yDataset });
+        EvaluateModel = await UniModalRegressionModel.deserialize(modelJson, weights);
     }
 
-    const modelJson = JSON.parse(modelStr);
-    const EvaluateModel = await UniModalRegressionModel.deserialize(modelJson, weights);
     const learningRate = options.optimizer.parameters.learning_rate;
     const optimizer = options.optimizer.name;
     const loss = options.compiler.parameters.loss;

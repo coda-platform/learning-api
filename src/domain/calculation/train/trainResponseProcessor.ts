@@ -2,6 +2,7 @@ import redisDataProcessor from "../../../infrastructure/redis/redisDataProcessor
 import Redis from "../../../infrastructure/redis/redisDataProcessor";
 import TrainResponse from "../../../models/response/trainResponse";
 import fieldLabelFormatter from "../../queries/fieldLabelFormatter";
+import MultiModalClassificationModel from "../model/MultiModalClassificationModel";
 import UniModalRegressionModel from "../model/UniModalRegressionModel";
 
 import * as tf from '@tensorflow/tfjs-node';
@@ -34,16 +35,19 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
     let yDataset = tf.data.array(flattenedLabelset);
     let datasetObj;
 
+    const modelJson = await JSON.parse(modelStr);
+
+    let TrainingModel;
     if (imageTensorArray) {
         const image = tf.data.array(imageTensorArray);
         xDataset = tf.data.zip({ input_1: xDataset, input_2: image });
         yDataset = tf.data.zip({ output: yDataset });
+        TrainingModel = await MultiModalClassificationModel.deserialize(modelJson, weights);
+    } else {
+        TrainingModel = await UniModalRegressionModel.deserialize(modelJson, weights);
     }
 
     datasetObj = tf.data.zip({ xs: xDataset, ys: yDataset });
-
-    const modelJson = await JSON.parse(modelStr);
-    const TrainingModel = await UniModalRegressionModel.deserialize(modelJson, weights);
 
     const { learning_rate, validation_split, evaluation_split, batch_size, epochs, shuffle } = options.optimizer.parameters;
     const optimizer = options.optimizer.name;
@@ -80,7 +84,7 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
         val_loss: history.history.val_loss[epochs - 1],
     };
 
-    const trainedWeights = await UniModalRegressionModel.saveWeights(TrainingModel);
+    const trainedWeights = await TrainingModel.saveWeights(TrainingModel);
 
     // Explicitly dispose resources
     tf.dispose([xDataset, yDataset, datasetObj, dataset, trainDataset, validationDataset, TrainingModel, imageTensorArray]);

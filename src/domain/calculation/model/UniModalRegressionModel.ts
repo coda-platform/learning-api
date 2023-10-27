@@ -19,7 +19,7 @@ async function createUniModalRegressionModel(inputShape: number[]) {
     activation: 'sigmoid',
     units: 1,
   }));
-  model.compile({ optimizer: tf.train.adam(0.0005), loss: 'binaryCrossentropy' });
+  model.compile({ optimizer: tf.train.adam(0.0005), loss: 'meanSquaredError' });
   return model;
 }
 
